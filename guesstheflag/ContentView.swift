@@ -9,53 +9,49 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
-
+    @State private var showingScore = false
+    @State private var scoreTitle = ""
+    @State private var countries = ["Estonia", "France", "Germany", "Ireland", "Italy", "Nigeria", "Poland", "Spain", "UK", "Ukraine", "US"].shuffled()
+    @State private var correctAnswer = Int.random(in: 0...2)
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
-                    }
-                }
-                .onDelete(perform: deleteItems)
+        ZStack {
+            Color.blue.ignoresSafeArea()
+            VStack(spacing: 30) {
+                Text("Tap the flag of").foregroundStyle(.white)
+                Text(countries[correctAnswer]).foregroundStyle(.white)
             }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
+        }.alert(scoreTitle, isPresented: $showingScore) {
+            Button("Continue", action: askQuestions)
+        } message: {
+            Text("Your score is ???")
+        }
+        ForEach(0..<3) { number in
+            Button {
+                flagTapped(number)
+            } label: {
+                Image(countries[number])
             }
-        } detail: {
-            Text("Select an item")
         }
     }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
+    
+    func flagTapped(_ number: Int) {
+        if number == correctAnswer {
+            print("Correct")
+            scoreTitle = "Correct"
+        } else {
+            print("Wrong")
+            scoreTitle = "Wrong"
         }
+        showingScore = true
     }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
-            }
-        }
+    
+    
+    func askQuestions() {
+        countries.shuffle()
+        correctAnswer = Int.random(in: 0...2)
     }
 }
 
 #Preview {
     ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
 }
